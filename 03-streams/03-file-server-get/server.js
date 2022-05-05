@@ -2,20 +2,17 @@ const url = require('url');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const {isPathnameCorrect, createResponseHandler} = require('../utils');
 
 const server = new http.Server();
-
-const isPathnameCorrect = (pathname) => {
-  return pathname && typeof pathname === 'string' && !pathname.includes('/');
-};
 
 server.on('request', (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = url.pathname.slice(1);
+  const responseHandler = createResponseHandler(res);
 
   if (!isPathnameCorrect(pathname)) {
-    res.statusCode = 400;
-    res.end('Error: pathname is not correct');
+    responseHandler(400, 'Error: pathname is not correct');
   }
 
   const filepath = path.join(__dirname, 'files', pathname);
@@ -28,11 +25,9 @@ server.on('request', (req, res) => {
 
       fsStream.on('error', (error) => {
         if (error.code === 'ENOENT') {
-          res.statusCode = 404;
-          res.end('Error: file not found');
+          responseHandler(404, 'Error: file not found');
         } else {
-          res.statusCode = 500;
-          res.end('Error: something goes wrong');
+          responseHandler(500, 'Error: something goes wrong');
         }
       });
 
@@ -43,8 +38,7 @@ server.on('request', (req, res) => {
       break;
 
     default:
-      res.statusCode = 501;
-      res.end('Not implemented');
+      responseHandler(501, 'Not implemented');
   }
 });
 
