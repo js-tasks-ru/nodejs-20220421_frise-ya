@@ -1,16 +1,28 @@
-module.exports.productsBySubcategory = async function productsBySubcategory(ctx, next) {
+const Product = require('../models/Product');
+const productParser = require('../parsers/product');
+
+
+module.exports.productsBySubcategory = async function productsBySubcategory(ctx) {
   const {subcategory} = ctx.query;
 
-  if (!subcategory) return next();
+  const productsData = await Product.find(subcategory ? {subcategory} : undefined);
 
-  ctx.body = {};
+  const products = productsData.map((productData) => productParser(productData));
+
+  ctx.body = {products};
 };
 
-module.exports.productList = async function productList(ctx, next) {
-  ctx.body = {};
-};
+module.exports.productById = async function productById(ctx) {
+  const {id} = ctx.params;
 
-module.exports.productById = async function productById(ctx, next) {
-  ctx.body = {};
+  const productData = await Product.findById(id);
+
+  if (!productData) {
+    ctx.throw(404, 'product doesn\'t exist');
+  }
+
+  const product = productParser(productData);
+
+  ctx.body = {product};
 };
 
